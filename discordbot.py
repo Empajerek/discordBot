@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# to do:
+# - skip function
+
 import os
 import re
 import discord
@@ -19,12 +22,14 @@ GUILD = os.getenv('DISCORD_GUILD')
 
 notification_role = "<@&779352944919183393>"
 global StatMessage
+songQueue = []
+alreadyPlaying = False
 
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='KWA ',intents=intents)
 
-async def music_bot(ctx, songName):
+async def musicBot(ctx, songName, channel):
     voice = discord.utils.get(ctx.guild.voice_channels, name=channel.name)
 
     voice_client = ctx.voice_client
@@ -50,6 +55,67 @@ async def music_bot(ctx, songName):
 
     voice_client.play(source)
 
+async def initUsersState(guild):
+    global activeUsers
+    activeUsers = 0 
+    for member in guild.members:
+        if member.voice is not None:
+            print()
+            activeUsers  += 1
+
+#init
+@bot.event
+async def on_ready():
+    for guild in bot.guilds:
+        if guild.name == GUILD:
+            break
+    print(f'{bot.user} dołączył do:\n{guild.name}(id: {guild.id})')
+    await initUsersState(guild)
+
+#simple pause
+@bot.command(brief="Zatrzymuje graną piosenkę.")
+async def pauza(ctx):
+    try:
+        await ctx.send(f"Taka przerwa też w sumie jest spoko!")
+        ctx.voice_client.pause()
+    except:
+        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
+
+#show song queue
+@bot.command(brief="Wyświetla listę następnych kawałków.")
+async def następny(ctx):
+    global songQueue
+    st = ""
+    for i in songQueue:
+        st += f"\n- {i}"
+    await ctx.send(f"Na liście jest jeszcze {len(songQueue)} kawałków.\n A wśród nich: {st}")
+
+#simple pause
+@bot.command(brief="Wznawia graną piosenkę.")
+async def wznów(ctx):
+    try:
+        await ctx.send(f"Lecimy maestro!")
+        ctx.voice_client.resume()
+    except:
+        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
+
+#music bot
+@bot.command(brief="Gra piosenkę na podstawie podanego hasła.")
+async def zagraj(ctx, *, arg):
+    global alreadyPlaying, songQueue
+    if alreadyPlaying:
+        await ctx.send(f"Dopisuje już do listy, wariacie!\n\"{str(arg)}\"\n<@{ctx.author.id}>")
+        songQueue.append(arg)
+        return
+
+    if ctx.author.voice is None:
+        await ctx.send(f"Nie wiem gdzie.\nMusisz gdzieś być abym ci zagrał ziomeczku!\n<@{ctx.author.id}>")
+        return
+    channel = ctx.author.voice.channel
+
+    alreadyPlaying = True
+    await musicBot(ctx, arg, channel)
+
     while ctx.voice_client.is_connected():
         if len(ctx.voice_client.channel.members) == 1:
             await ctx.voice_client.disconnect()
@@ -59,84 +125,16 @@ async def music_bot(ctx, songName):
         elif ctx.voice_client.is_playing():
             await asyncio.sleep(1)
         else:
-            await ctx.voice_client.disconnect()
-            break
-
-async def initUsersState(guild):
-    global activeUsers
-    activeUsers = 0 
-    for member in guild.members:
-        if member.voice is not None:
-            print()
-            activeUsers  += 1
-
-@bot.event
-async def on_ready():
-    for guild in bot.guilds:
-        if guild.name == GUILD:
-            break
-    print(f'{bot.user} dołączył do:\n{guild.name}(id: {guild.id})')
-    await initUsersState(guild)
-
-@bot.command(brief="Zatrzymuje graną piosenkę.")
-async def pauza(ctx):
-    try:
-        ctx.voice_client.pause()
-    except:
-        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
-
-
-@bot.command(brief="Wznawia graną piosenkę.")
-async def wznów(ctx):
-    try:
-        ctx.voice_client.resume()
-    except:
-        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
-
-@bot.command(brief="Gra piosenkę z podanego linku.")
-async def zagraj(ctx, *, arg):
-        if ctx.author.voice is None:
-            await ctx.send(f"Nie wiem gdzie.\nMusisz gdzieś być abym ci zagrał ziomeczku!\n<@{ctx.author.id}>")
-            return
-        channel = ctx.author.voice.channel
-
-        voice = discord.utils.get(ctx.guild.voice_channels, name=channel.name)
-
-        voice_client = ctx.voice_client
-
-        if voice_client == None:
-            voice_client = await voice.connect()
-        else:
-            await voice_client.move_to(channel)
-
-        arg = arg.replace(" ", "+")
-
-        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + str(arg))
-        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
-
-        
-        await ctx.send("https://www.youtube.com/watch?v=" + video_ids[0])
-
-        song = pafy.new(video_ids[0])
-
-        audio = song.getbestaudio()
-
-        source = FFmpegPCMAudio(audio.url, **FFMPEG_OPTIONS)
-
-        voice_client.play(source)
-
-        while ctx.voice_client.is_connected():
-            if len(ctx.voice_client.channel.members) == 1:
-                await ctx.voice_client.disconnect()
-                break
-            elif ctx.voice_client.is_paused():
-                await asyncio.sleep(1)
-            elif ctx.voice_client.is_playing():
-                await asyncio.sleep(1)
+            if len(songQueue):
+                song = songQueue.pop()
+                await ctx.send(f"Teraz gramy: {song} !")
+                await musicBot(ctx,song,channel)
             else:
+                alereadyPlaying = False
                 await ctx.voice_client.disconnect()
                 break
 
+#simple responder
 @bot.command(brief="Odpowiadam.")
 @commands.has_role('botyk')
 async def respond(ctx):
@@ -149,7 +147,6 @@ async def respond(ctx):
     else:
         response = f'<@{ctx.message.author.id}> said {"".join(ctx.message.content.split(" ")[2:])}'
         await ctx.channel.send(response)
-
 
 #notification bot
 @bot.event
@@ -164,12 +161,12 @@ async def on_voice_state_update(member, before, after):
             if activeUsers:
                 try:
                     if activeUsers > 1:
-                        await StatMessage.edit(content=f"🎙️Właśnie jest {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
+                        await StatMessage.edit(content=f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
                     else:
                         await StatMessage.edit(content=f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n{notification_role}")
                 except (NameError, discord.errors.NotFound):
                     if activeUsers > 1:
-                        StatMessage =  await channel.send(f"🎙️Właśnie jest {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
+                        StatMessage =  await channel.send(f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
                     else:
                         StatMessage =  await channel.send(f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n{notification_role}")
             else:
