@@ -9,11 +9,6 @@ GUILD = os.getenv('DISCORD_GUILD')
 notification_channel = "<@&779352944919183393>"
 global StatMessage
 
-#overite to not pollute noti' channel
-
-notification_channel = ""
-
-
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
@@ -49,6 +44,7 @@ async def on_message(message):
     if message.author == client.user or message.author.bot == True:
         return
 
+    print(message)
     if "mouthbreather" in message.content.split(" "):
         response = f"pls don't offend me."
         await message.channel.send(response)
