@@ -6,6 +6,13 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
+notification_channel = "<@&779352944919183393>"
+global StatMessage
+
+#overite to not pollute noti' channel
+
+notification_channel = ""
+
 
 intents = discord.Intents.default()
 intents.members = True
@@ -18,8 +25,8 @@ async def initUsersState(guild):
     activeUsers = 0 
     for member in guild.members:
         if member.voice is not None:
+            print()
             activeUsers  += 1
-    print(activeUsers)
 
 @client.event
 async def on_ready():
@@ -29,13 +36,13 @@ async def on_ready():
 
     print(
         f'{client.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})\n'
+        f'{guild.name}(id: {guild.id})'
     )
 
     await initUsersState(guild)
 
-    members = '\n - '.join([member.name for member in guild.members])
-    print(f'Guild Members:\n - {members}')
+    #members = '\n - '.join([member.name for member in guild.members])
+    #print(f'Guild Members:\n - {members}')
 
 @client.event
 async def on_message(message):
@@ -51,7 +58,7 @@ async def on_message(message):
 
 @client.event
 async def on_voice_state_update(member, before, after):
-    global activeUsers
+    global activeUsers, notification_channel,StatMessage
     if before.channel is None and after.channel is not None:
         activeUsers += 1
     if before.channel is not None and after.channel is None:
@@ -59,8 +66,8 @@ async def on_voice_state_update(member, before, after):
     for channel in member.guild.channels:
         if channel.name == 'tuba-nagłaśniająca':
             try:
-                message = await message.edit(content=f"There are now {activeUsers} in vc, come on join them!")
-            except UnboundLocalError:
-                message =  await channel.send(f"There are now {activeUsers} in vc, come on join them!")
+                await StatMessage.edit(content=f"🎙️There are {activeUsers} people currently chatting!\n{notification_channel}")
+            except (NameError, discord.errors.NotFound):
+                StatMessage =  await channel.send(f"🎙️There are {activeUsers} people currently chatting!\n{notification_channel}")
 
 client.run(TOKEN)
