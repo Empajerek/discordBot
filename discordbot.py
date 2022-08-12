@@ -2,6 +2,7 @@
 
 # to do:
 # - skip function
+# - auto delete notification messages
 
 import os
 import re
