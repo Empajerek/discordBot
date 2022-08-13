@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# some really important features
 # to do:
 # - skip function
 # - auto delete notification messages
