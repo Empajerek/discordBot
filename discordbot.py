@@ -155,6 +155,7 @@ async def respond(ctx, *, arg):
 @bot.command(brief="Aktualizuje.")
 @commands.has_role('Botyk')
 async def aktualizuj(ctx):
+    await ctx.send(f"Już się robi szefie!")
     os.execl("./bot.sh","bot.sh")
 
 
