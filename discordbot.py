@@ -145,6 +145,7 @@ async def zagraj(ctx, *, arg):
             if len(songQueue):
                 song = songQueue.pop()
                 await musicBot(ctx,song,channel)
+                await asyncio.sleep(1)
             else:
                 alreadyPlaying = False
                 await ctx.voice_client.disconnect()
