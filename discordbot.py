@@ -7,8 +7,6 @@
 
 import os
 import re
-import sys
-import psutil
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -157,7 +155,7 @@ async def respond(ctx, *, arg):
 @bot.command(brief="Aktualizuje.")
 @commands.has_role('Botyk')
 async def aktualizuj(ctx):
-    os.execl("bot.sh","")
+    os.execl("./bot.sh","bot.sh")
 
 
 #notification bot
