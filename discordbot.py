@@ -22,7 +22,8 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-notification_role = "<@&779352944919183393>"
+notification_role = "779352944919183393"
+notification_channel = "1007685204162396181"
 global StatMessage
 songQueue = []
 alreadyPlaying = False
@@ -139,15 +140,15 @@ async def zagraj(ctx, *, arg):
 #simple responder
 @bot.command(brief="Odpowiadam.")
 @commands.has_role('botyk')
-async def respond(ctx):
-    if ctx.message.author == bot.user or ctx.message.author.bot == True:
+async def respond(ctx, *, arg):
+    if ctx.author == bot.user or ctx.author.bot == True:
         return
 
-    if "mouthbreather" in ctx.message.content.split(" "):
+    if "mouthbreather" in arg.split(" "):
         response = f"pls don't offend me."
         await ctx.send(response)
     else:
-        response = f'<@{ctx.message.author.id}> said {"".join(ctx.message.content.split(" ")[2:])}'
+        response = f'<@{ctx.author.id}> said {"".join(arg)}'
         await ctx.channel.send(response)
 
 #notification bot
@@ -159,18 +160,18 @@ async def on_voice_state_update(member, before, after):
     if before.channel is not None and after.channel is None:
         activeUsers -= 1
     for channel in member.guild.channels:
-        if channel.name == 'tuba-nagłaśniająca':
+        if channel.id == '1007685204162396181':
             if activeUsers:
                 try:
                     if activeUsers > 1:
-                        await StatMessage.edit(content=f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
+                        await StatMessage.edit(content=f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n<@&{notification_role}>")
                     else:
-                        await StatMessage.edit(content=f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n{notification_role}")
+                        await StatMessage.edit(content=f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n<@&{notification_role}>")
                 except (NameError, discord.errors.NotFound):
                     if activeUsers > 1:
-                        StatMessage =  await channel.send(f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n{notification_role}")
+                        StatMessage =  await channel.send(f"🎙️Właśnie są {activeUsers} osoby na czacie, wbijaj!\n<@&{notification_role}>")
                     else:
-                        StatMessage =  await channel.send(f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n{notification_role}")
+                        StatMessage =  await channel.send(f"🎙️Właśnie jest jedna osoba na czacie, wbijaj!\n<@&{notification_role}>")
             else:
                 try:
                     await StatMessage.delete()
