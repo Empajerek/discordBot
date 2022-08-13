@@ -140,7 +140,7 @@ async def zagraj(ctx, *, arg):
 #simple responder
 @bot.command(brief="Odpowiadam.")
 @commands.has_role('Botyk')
-async def respond(ctx, *, arg):
+async def odpowiedz(ctx, *, arg):
     if ctx.author == bot.user or ctx.author.bot == True:
         return
 
@@ -148,7 +148,7 @@ async def respond(ctx, *, arg):
         response = f"pls don't offend me."
         await ctx.send(response)
     else:
-        response = f'<@{ctx.author.id}> said {"".join(arg)}'
+        response = f'<@{ctx.author.id}> powiedział {"".join(arg)}'
         await ctx.channel.send(response)
 
 #update
