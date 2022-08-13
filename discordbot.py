@@ -154,17 +154,10 @@ async def respond(ctx, *, arg):
         await ctx.channel.send(response)
 
 #update
-@bot.command(brief="Aktualizuje i zamykam.")
+@bot.command(brief="Aktualizuje.")
 @commands.has_role('Botyk')
-async def respond(ctx):
-    try:
-        p = psutil.Process(os.getpid())
-        for handler in p.get_open_files() + p.connections():
-            os.close(handler.fd)
-    except Exception as e:
-        print(e)
-
-    os.execl(os.path.abspath("bot.sh"))
+async def aktualizuj(ctx):
+    os.execl("bot.sh","")
 
 
 #notification bot
@@ -193,4 +186,5 @@ async def on_voice_state_update(member, before, after):
                     await StatMessage.delete()
                 except (NameError, discord.errors.NotFound):
                     pass
+
 bot.run(TOKEN)
