@@ -7,6 +7,8 @@
 
 import os
 import re
+import sys
+import psutil
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -139,7 +141,7 @@ async def zagraj(ctx, *, arg):
 
 #simple responder
 @bot.command(brief="Odpowiadam.")
-@commands.has_role('botyk')
+@commands.has_role('Botyk')
 async def respond(ctx, *, arg):
     if ctx.author == bot.user or ctx.author.bot == True:
         return
@@ -151,16 +153,30 @@ async def respond(ctx, *, arg):
         response = f'<@{ctx.author.id}> said {"".join(arg)}'
         await ctx.channel.send(response)
 
+#update
+@bot.command(brief="Aktualizuje i zamykam.")
+@commands.has_role('Botyk')
+async def respond(ctx):
+    try:
+        p = psutil.Process(os.getpid())
+        for handler in p.get_open_files() + p.connections():
+            os.close(handler.fd)
+    except Exception as e:
+        print(e)
+
+    os.execl(os.path.abspath("bot.sh"))
+
+
 #notification bot
 @bot.event
 async def on_voice_state_update(member, before, after):
-    global activeUsers, notification_channel,StatMessage
+    global activeUsers, notification_role,StatMessage, notification_channel
     if before.channel is None and after.channel is not None:
         activeUsers += 1
     if before.channel is not None and after.channel is None:
         activeUsers -= 1
     for channel in member.guild.channels:
-        if channel.id == '1007685204162396181':
+        if channel.id == notification_channel:
             if activeUsers:
                 try:
                     if activeUsers > 1:
