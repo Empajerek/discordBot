@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# to do:
-# - skip function
-# - auto delete notification messages
-
+from email import message
 import os
 import re
 import discord
@@ -47,7 +44,7 @@ async def musicBot(ctx, songName, channel):
     video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
 
         
-    await ctx.send("https://www.youtube.com/watch?v=" + video_ids[0])
+    message = await ctx.send("https://www.youtube.com/watch?v=" + video_ids[0])
 
     song = pafy.new(video_ids[0])
 
@@ -57,12 +54,13 @@ async def musicBot(ctx, songName, channel):
 
     voice_client.play(source)
 
+    return message
+
 async def initUsersState(guild):
     global activeUsers
     activeUsers = 0 
     for member in guild.members:
         if member.voice is not None:
-            print()
             activeUsers  += 1
 
 #init
@@ -81,7 +79,7 @@ async def pauza(ctx):
         await ctx.send(f"Taka przerwa też w sumie jest spoko!")
         ctx.voice_client.pause()
     except:
-        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
+        await ctx.send(f"{ctx.author.mention} nic przecież nie gram!")
 
 #show song queue
 @bot.command(brief="Wyświetla listę następnych kawałków.")
@@ -99,7 +97,16 @@ async def wznów(ctx):
         await ctx.send(f"Lecimy maestro!")
         ctx.voice_client.resume()
     except:
-        await ctx.send(f"{ctx.author.mention} nic przecierz nie gram!")
+        await ctx.send(f"{ctx.author.mention} nic przecież nie gram!")
+
+#song skip
+@bot.command(brief="Wznawia graną piosenkę.")
+async def pomiń(ctx):
+    try:
+        await ctx.send(f"Pomijamy!")
+        ctx.voice_client.stop()
+    except:
+        await ctx.send(f"{ctx.author.mention} nic przecież nie gram!")
 
 #music bot
 @bot.command(brief="Gra piosenkę na podstawie podanego hasła.")
@@ -116,23 +123,30 @@ async def zagraj(ctx, *, arg):
     channel = ctx.author.voice.channel
 
     alreadyPlaying = True
-    await musicBot(ctx, arg, channel)
+    message = await musicBot(ctx, arg, channel)
 
     while ctx.voice_client.is_connected():
         if len(ctx.voice_client.channel.members) == 1:
             await ctx.voice_client.disconnect()
+            try:
+                await message.delete()
+            except:
+                pass
             break
         elif ctx.voice_client.is_paused():
             await asyncio.sleep(1)
         elif ctx.voice_client.is_playing():
             await asyncio.sleep(1)
         else:
+            try:
+                await message.delete()
+            except:
+                pass
             if len(songQueue):
                 song = songQueue.pop()
-                await ctx.send(f"Teraz gramy: {song} !")
                 await musicBot(ctx,song,channel)
             else:
-                alereadyPlaying = False
+                alreadyPlaying = False
                 await ctx.voice_client.disconnect()
                 break
 
@@ -167,7 +181,7 @@ async def on_voice_state_update(member, before, after):
     if before.channel is not None and after.channel is None:
         activeUsers -= 1
     for channel in member.guild.channels:
-        if channel.id == notification_channel:
+        if str(channel.id) == notification_channel:
             if activeUsers:
                 try:
                     if activeUsers > 1:
