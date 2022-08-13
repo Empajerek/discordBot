@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# some really important features
 # to do:
 # - skip function
 # - auto delete notification messages
@@ -155,7 +154,7 @@ async def odpowiedz(ctx, *, arg):
 @bot.command(brief="Aktualizuje.")
 @commands.has_role('Botyk')
 async def aktualizuj(ctx):
-    await ctx.send(f"Już się robi szefie!xdd")
+    await ctx.send(f"Już się robi szefie!")
     os.execl("./bot.sh","bot.sh")
 
 
